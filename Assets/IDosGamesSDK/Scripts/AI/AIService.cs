@@ -14,6 +14,26 @@ namespace IDosGames
 
         public static string URL_AI_SERVICE = IDosGamesSDKSettings.Instance.AILink;
 
+        public static async Task<string> CreateThreadAndRun(AIRequest req)
+        {
+            var requestBody = new IGSRequest
+            {
+                TitleID = IDosGamesSDKSettings.Instance.TitleID,
+                WebAppLink = WebSDK.webAppLink,
+                UserID = AuthService.UserID,
+                ClientSessionTicket = AuthService.ClientSessionTicket,
+                UsageTime = IDosGamesSDKSettings.Instance.PlayTime,
+                AIRequest = req,
+            };
+
+            string responseString = await SendPostRequest(URL_AI_SERVICE + nameof(CreateThreadAndRun), requestBody);
+            var response = JsonConvert.DeserializeObject<string>(responseString);
+
+            if (response != null) { IDosGamesSDKSettings.Instance.PlayTime = 0; }
+
+            return response;
+        }
+
         public static async Task<string> CreateThread()
         {
             var requestBody = new IGSRequest

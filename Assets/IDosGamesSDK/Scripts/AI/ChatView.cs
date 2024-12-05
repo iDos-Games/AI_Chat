@@ -26,21 +26,16 @@ namespace IDosGames
         [SerializeField] private GameObject _loading;
 
         private const float TYPE_SPEED = 50f;
-        private Dictionary<string, ChatThreadModel> threads = new Dictionary<string, ChatThreadModel>();
-        private ChatThreadModel currentThread;
-        public Dictionary<string, ChatThreadModel> Threads => threads;
+        private List<MessageAI> messages = new List<MessageAI>();
 
         private async void Start()
         {
-            LoadThreads();
-            if (threads.Count == 0)
-            {
-                await CreateNewThread();  // Создание нового треда через AIService
-            }
-            else
-            {
-                SwitchThread(threads.Values.First().id);
-            }
+            SetActivateLoading(false);
+            SetInteractableSendButton(true);
+
+            // Первое сообщение от ассистента
+            string initialMessage = "Hello, I'm a support bot, can I help you?";
+            SendBotMessage(initialMessage);
         }
 
         private void OnEnable()
@@ -55,22 +50,34 @@ namespace IDosGames
         }
 
         // Отправка сообщения пользователя
-        public async void SendUserMessage(string message)
+        public async void SendUserMessage()
         {
+            string message = GetInputMessage();
             SendMessagePrefab(_userMessagePrefab, message);
             ClearInput();
             StartScrollToBottom();
             SetActivateLoading(true);
 
-            AddMessageToCurrentThread("user", message, messageId: Guid.NewGuid().ToString());
-
-            // Отправляем сообщение сервису AI
-            var aiRequest = new AIRequest
+            messages.Add(new MessageAI
             {
-                MessageContent = message,
-            };
-            string aiResponse = await AIService.CreateMessage(aiRequest);
+                Role = "user",
+                Content = message
+            });
+
+            string aiResponse = await GetAIResponse();
             SendBotMessage(aiResponse);
+        }
+
+        // Получение ответа AI
+        private async Task<string> GetAIResponse()
+        {
+            var request = new AIRequest
+            {
+                Messages = messages
+            };
+
+            string response = await AIService.CreateThreadAndRun(request);
+            return response;
         }
 
         // Отправка сообщения бота
@@ -78,15 +85,12 @@ namespace IDosGames
         {
             StartCoroutine(TypeTextWithCoroutine(message, Instantiate(_botMessagePrefab, _scrollRect.content.transform)));
             SetActivateLoading(false);
-            AddMessageToCurrentThread("assistant", message, messageId: Guid.NewGuid().ToString());
-        }
 
-        // Отправка пригласительного сообщения
-        public void SendInviteMessage(string message)
-        {
-            StartCoroutine(TypeTextWithCoroutine(message, Instantiate(_inviteMessagePrefab, _scrollRect.content.transform)));
-            SetActivateLoading(false);
-            AddMessageToCurrentThread("assistant", message, messageId: Guid.NewGuid().ToString());
+            messages.Add(new MessageAI
+            {
+                Role = "assistant",
+                Content = message
+            });
         }
 
         // Эффект печатания текста
@@ -145,107 +149,6 @@ namespace IDosGames
                 _loading.transform.SetParent(_scrollRect.transform);
             }
             _loading.SetActive(active);
-        }
-
-        // Обновление чата
-        public async void Refresh()
-        {
-            SetActivateLoading(false);
-
-            foreach (Transform child in _scrollRect.content)
-            {
-                Destroy(child.gameObject);
-            }
-
-            if (currentThread != null)
-            {
-                foreach (var message in currentThread.messages)
-                {
-                    DisplayMessage(message);
-                }
-            }
-            else
-            {
-                await CreateNewThread();
-            }
-        }
-
-        // Создание нового треда
-        public async Task CreateNewThread()
-        {
-            string threadId = await AIService.CreateThread();
-            currentThread = new ChatThreadModel
-            {
-                id = threadId,
-                created_at = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-            };
-            threads[threadId] = currentThread;
-            SaveThreads();
-            Refresh();
-        }
-
-        // Переключение между тредами
-        public void SwitchThread(string threadId)
-        {
-            if (threads.ContainsKey(threadId))
-            {
-                currentThread = threads[threadId];
-                Refresh();
-            }
-        }
-
-        // Добавление сообщения в текущий тред
-        private void AddMessageToCurrentThread(string role, string message, string messageId)
-        {
-            var chatMessage = new ChatMessageModel
-            {
-                id = messageId,
-                created_at = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                thread_id = currentThread.id,
-                role = role,
-                content = new List<ChatMessageContent>
-                {
-                    new ChatMessageContent
-                    {
-                        type = "text",
-                        text = new ChatMessageText { value = message }
-                    }
-                },
-                assistant_id = role == "assistant" ? "asst_abc" : string.Empty,
-                run_id = role == "assistant" ? "run_abc" : string.Empty
-            };
-            currentThread.messages.Add(chatMessage);
-            SaveThreads();
-            DisplayMessage(chatMessage);
-        }
-
-        // Отображение сообщения в UI
-        private void DisplayMessage(ChatMessageModel message)
-        {
-            var chatMessage = message.role == "user"
-                ? Instantiate(_userMessagePrefab, _scrollRect.content.transform)
-                : Instantiate(_botMessagePrefab, _scrollRect.content.transform);
-
-            chatMessage.Set(message.content[0].text.value);
-            StartScrollToBottom();
-        }
-
-        // Сохранение тредов в PlayerPrefs
-        private void SaveThreads()
-        {
-            string json = JsonUtility.ToJson(new Serialization<Dictionary<string, ChatThreadModel>>(threads));
-            PlayerPrefs.SetString("ChatThreads", json);
-            PlayerPrefs.Save();
-        }
-
-        // Загрузка тредов из PlayerPrefs
-        private void LoadThreads()
-        {
-            string json = PlayerPrefs.GetString("ChatThreads", string.Empty);
-            if (!string.IsNullOrEmpty(json))
-            {
-                threads = JsonUtility.FromJson<Serialization<Dictionary<string, ChatThreadModel>>>(json).target;
-            }
         }
 
         // Метод для отправки сообщения через префаб
