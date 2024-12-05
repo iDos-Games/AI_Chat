@@ -14,14 +14,30 @@ namespace IDosGames
 
         public static string URL_AI_SERVICE = IDosGamesSDKSettings.Instance.AILink;
 
-        public static async Task<string> CreateMessage(string userID, string clientSessionTicket, AIRequest req)
+        public static async Task<string> CreateThread()
         {
             var requestBody = new IGSRequest
             {
                 TitleID = IDosGamesSDKSettings.Instance.TitleID,
                 WebAppLink = WebSDK.webAppLink,
-                UserID = userID,
-                ClientSessionTicket = clientSessionTicket,
+                UserID = AuthService.UserID,
+                ClientSessionTicket = AuthService.ClientSessionTicket,
+                UsageTime = IDosGamesSDKSettings.Instance.PlayTime,
+            };
+
+            string responseString = await SendPostRequest(URL_AI_SERVICE + nameof(CreateThread), requestBody);
+            if (responseString != null) { IDosGamesSDKSettings.Instance.PlayTime = 0; }
+            return responseString;
+        }
+
+        public static async Task<string> CreateMessage(AIRequest req)
+        {
+            var requestBody = new IGSRequest
+            {
+                TitleID = IDosGamesSDKSettings.Instance.TitleID,
+                WebAppLink = WebSDK.webAppLink,
+                UserID = AuthService.UserID,
+                ClientSessionTicket = AuthService.ClientSessionTicket,
                 UsageTime = IDosGamesSDKSettings.Instance.PlayTime,
                 AIRequest = req,
             };
@@ -34,14 +50,14 @@ namespace IDosGames
             return response;
         }
 
-        public static async Task<string> RetrieveResponse(string userID, string clientSessionTicket, AIRequest req)
+        public static async Task<string> RetrieveResponse(AIRequest req)
         {
             var requestBody = new IGSRequest
             {
                 TitleID = IDosGamesSDKSettings.Instance.TitleID,
                 WebAppLink = WebSDK.webAppLink,
-                UserID = userID,
-                ClientSessionTicket = clientSessionTicket,
+                UserID = AuthService.UserID,
+                ClientSessionTicket = AuthService.ClientSessionTicket,
                 UsageTime = IDosGamesSDKSettings.Instance.PlayTime,
                 AIRequest = req,
             };
