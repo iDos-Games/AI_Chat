@@ -56,12 +56,35 @@ namespace IDosGames
 
         public FunctionParameters FunctionParameter { get; set; }
         public string TelegramInitData { get; set; }
+        public AIRequest AIRequest { get; set; }
 
 #if UNITY_EDITOR
         // For Admin API
         public List<FileUpload> Files { get; set; }
 #endif
 
+    }
+
+    public class AIRequest
+    {
+        public string Model { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string Instructions { get; set; }
+        public string FilePath { get; set; }
+        public string AssistantId { get; set; }
+        public string MessageContent { get; set; }
+        public string ThreadId { get; set; }
+        public string MessageId { get; set; }
+        public string MaxMessages { get; set; }
+        public string Role { get; set; }
+        public string Content { get; set; }
+        public List<Tool> Tools { get; set; }
+    }
+
+    public class Tool
+    {
+        public string Type { get; set; }
     }
 
 #if UNITY_EDITOR

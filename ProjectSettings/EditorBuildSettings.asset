@@ -6,9 +6,10 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/IDosGamesSDK/Scenes/Login.unity
-    guid: 2be892a07374bf84eb51d093e6d34cb0
+    path: Assets/AI_Chat/Scenes/Login.unity
+    guid: 6f693b7c294008b4f83b71e9ec8ff101
   - enabled: 1
-    path: Assets/IDosGamesSDK/Scenes/Main.unity
-    guid: 110f0a0730c7f6144acdf0d3ee5c081a
+    path: Assets/AI_Chat/Scenes/Main.unity
+    guid: 199ecfa0725443d43b94f3df3b934c63
   m_configObjects: {}
+  m_UseUCBPForAssetBundles: 0

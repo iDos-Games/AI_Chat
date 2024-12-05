@@ -128,6 +128,7 @@ namespace IDosGames
         public string DealOfferSystemLink => $"{_serverLink}/api/{_titleTemplateID}/{_titleID}/Client/DealOffer/".Trim();
         public string ValidateIAPLink => $"{_serverLink}/api/{_titleTemplateID}/{_titleID}/Client/ValidateIAP".Trim();
         public string PurchaseLink => $"{_serverLink}/api/{_titleTemplateID}/{_titleID}/Client/Purchase/".Trim();
+        public string AILink => $"{_serverLink}/api/{_titleTemplateID}/{_titleID}/Client/AI/".Trim();
 
         [Space(5)]
         [Header("In App Purchasing")]
