@@ -1,7 +1,5 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
@@ -28,7 +26,7 @@ namespace IDosGames
         private const float TYPE_SPEED = 50f;
         private List<MessageAI> messages = new List<MessageAI>();
 
-        private async void Start()
+        private void Start()
         {
             SetActivateLoading(false);
             SetInteractableSendButton(true);
@@ -36,6 +34,9 @@ namespace IDosGames
             // Первое сообщение от ассистента
             string initialMessage = "Hello, I'm a support bot, can I help you?";
             SendBotMessage(initialMessage);
+
+            // Программно присваиваем метод кнопке
+            _sendButton.onClick.AddListener(SendUserMessage);
         }
 
         private void OnEnable()

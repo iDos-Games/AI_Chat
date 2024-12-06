@@ -27,11 +27,8 @@ namespace IDosGames
             };
 
             string responseString = await SendPostRequest(URL_AI_SERVICE + nameof(CreateThreadAndRun), requestBody);
-            var response = JsonConvert.DeserializeObject<string>(responseString);
-
-            if (response != null) { IDosGamesSDKSettings.Instance.PlayTime = 0; }
-
-            return response;
+            if (responseString != null) { IDosGamesSDKSettings.Instance.PlayTime = 0; }
+            return responseString;
         }
 
         public static async Task<string> CreateThread()
