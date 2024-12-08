@@ -1,4 +1,5 @@
 using IDosGames.ClientModels;
+using IDosGames.TitlePublicConfiguration;
 using IDosGames.UserProfile;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -59,6 +60,8 @@ namespace IDosGames
         private static UserDataService _instance;
 
         private static bool _continueRequestAllDataSequence;
+
+        public static TitlePublicConfigurationModel TitlePublicConfiguration;
 
         public static UserDataService Instance => _instance;
 
@@ -418,6 +421,8 @@ namespace IDosGames
         private static void OnTitlePublicConfigurationReceived(JObject result)
         {
             TitlePublicConfigurationReceived?.Invoke(result);
+
+            TitlePublicConfiguration = JsonConvert.DeserializeObject<TitlePublicConfigurationModel>(result.ToString());
 
             UpdateCachedTitlePublicConfiguration(result);
         }

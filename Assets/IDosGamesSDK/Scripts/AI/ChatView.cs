@@ -24,18 +24,27 @@ namespace IDosGames
         [SerializeField] private GameObject _loading;
 
         private const float TYPE_SPEED = 50f;
-        private const int MIN_MESSAGE_LENGTH = 3;
+        private const int MIN_MESSAGE_LENGTH = 2;
         private const int MAX_MESSAGE_LENGTH = 500;
         private List<MessageAI> messages = new List<MessageAI>();
+
+        string _welcomeMessage;
 
         private void Start()
         {
             SetActivateLoading(false);
             SetInteractableSendButton(true);
 
-            // Первое сообщение от ассистента
-            string initialMessage = "Hello, I'm a support bot, can I help you?";
-            SendBotMessage(initialMessage);
+            if (string.IsNullOrEmpty(UserDataService.TitlePublicConfiguration.AiSettings.AiWelcomeMessage))
+            {
+                _welcomeMessage = "Hello, I'm a support bot, can I help you?";
+            }
+            else
+            {
+                _welcomeMessage = UserDataService.TitlePublicConfiguration.AiSettings.AiWelcomeMessage;
+            }
+
+            SendBotMessage(_welcomeMessage);
 
             // Программно присваиваем метод кнопке
             _sendButton.onClick.AddListener(SendUserMessage);
