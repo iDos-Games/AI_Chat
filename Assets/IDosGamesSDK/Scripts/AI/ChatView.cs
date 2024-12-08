@@ -24,6 +24,8 @@ namespace IDosGames
         [SerializeField] private GameObject _loading;
 
         private const float TYPE_SPEED = 50f;
+        private const int MIN_MESSAGE_LENGTH = 3;
+        private const int MAX_MESSAGE_LENGTH = 500;
         private List<MessageAI> messages = new List<MessageAI>();
 
         private void Start()
@@ -37,6 +39,10 @@ namespace IDosGames
 
             // Программно присваиваем метод кнопке
             _sendButton.onClick.AddListener(SendUserMessage);
+
+            // Подписка на изменение текста в поле ввода
+            _inputField.onValueChanged.AddListener(CheckInputLength);
+            ClearInput();
         }
 
         private void OnEnable()
@@ -50,10 +56,22 @@ namespace IDosGames
             StopAllCoroutines();
         }
 
+        // Проверка длины ввода и установка активности кнопки
+        private void CheckInputLength(string input)
+        {
+            SetInteractableSendButton(input.Length >= MIN_MESSAGE_LENGTH && input.Length <= MAX_MESSAGE_LENGTH);
+        }
+
         // Отправка сообщения пользователя
         public async void SendUserMessage()
         {
             string message = GetInputMessage();
+            if (message.Length < MIN_MESSAGE_LENGTH || message.Length > MAX_MESSAGE_LENGTH)
+            {
+                Debug.LogWarning("Message length is out of range.");
+                return;
+            }
+
             SendMessagePrefab(_userMessagePrefab, message);
             ClearInput();
             StartScrollToBottom();
@@ -123,6 +141,7 @@ namespace IDosGames
         private void ClearInput()
         {
             _inputField.text = string.Empty;
+            CheckInputLength(string.Empty); // Проверить длину после очистки
         }
 
         // Начать прокрутку вниз
