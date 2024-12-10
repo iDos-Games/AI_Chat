@@ -141,6 +141,7 @@ namespace IDosGames
 #if UNITY_WEBGL
             if (AuthService.WebGLPlatform != WebGLPlatform.None)
             {
+                WebSDK.CopyTextToClipboard(ReferralLink);
                 WebSDK.ShareLink(ReferralLink);
             }
 #endif

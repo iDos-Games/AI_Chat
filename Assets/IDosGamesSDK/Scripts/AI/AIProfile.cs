@@ -49,5 +49,10 @@ namespace IDosGames
         {
             ShopSystem.PopUpSystem.ShowShopWindow();
         }
+
+        public void ShareReferralLink()
+        {
+            ReferralSystem.Share();
+        }
     }
 }
