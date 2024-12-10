@@ -2453,6 +2453,8 @@ MonoBehaviour:
     type: 3}
   _inviteMessagePrefab: {fileID: 551841807161284514, guid: 59bd52e097cf540498e7cfadea2fafd1,
     type: 3}
+  _buyMessagePrefab: {fileID: 551841807161284514, guid: b15edeba1ac16774e90bf7f1c9f5cc09,
+    type: 3}
   _loading: {fileID: 1007455026}
 --- !u!1 &1446718076
 GameObject:

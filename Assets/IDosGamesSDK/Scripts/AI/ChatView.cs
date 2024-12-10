@@ -19,6 +19,7 @@ namespace IDosGames
         [SerializeField] private ChatMessage _botMessagePrefab;
         [SerializeField] private ChatMessage _userMessagePrefab;
         [SerializeField] private ChatMessage _inviteMessagePrefab;
+        [SerializeField] private ChatMessage _buyMessagePrefab;
 
         [Header("Loading")]
         [Space(10)]
@@ -109,7 +110,19 @@ namespace IDosGames
             SaveMessages(messages);
 
             string aiResponse = await GetAIResponse();
-            SendBotMessage(aiResponse);
+
+            if (aiResponse != null)
+            {
+                if (aiResponse.Contains("INSUFFICIENT_FUNDS"))
+                {
+                    string buyMessage = "Looks like you are out of coins. You need coins to send messages, buy them by clicking on the button below";
+                    SendBuyMessage(buyMessage);
+                }
+                else
+                {
+                    SendBotMessage(aiResponse);
+                }
+            }
         }
 
         // Получение ответа AI
@@ -124,16 +137,19 @@ namespace IDosGames
 
             if (response != null)
             {
-                string currencyCode = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrency;
-                int amountToDeduct = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrencyAmount;
+                if (!response.Contains("INSUFFICIENT_FUNDS"))
+                {
+                    string currencyCode = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrency;
+                    int amountToDeduct = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrencyAmount;
 
-                int currentAmount = IGSUserData.UserInventory.VirtualCurrency.GetValueOrDefault(currencyCode, 0);
+                    int currentAmount = IGSUserData.UserInventory.VirtualCurrency.GetValueOrDefault(currencyCode, 0);
 
-                int newAmount = currentAmount - amountToDeduct;
+                    int newAmount = currentAmount - amountToDeduct;
 
-                IGSUserData.UserInventory.VirtualCurrency[currencyCode] = newAmount;
+                    IGSUserData.UserInventory.VirtualCurrency[currencyCode] = newAmount;
 
-                UserDataService.VirtualCurrencyUpdatedInvoke();
+                    UserDataService.VirtualCurrencyUpdatedInvoke();
+                }
             }
 
             return response;
@@ -153,6 +169,19 @@ namespace IDosGames
 
             // Сохранение истории сообщений
             SaveMessages(messages);
+        }
+
+        public void SendBuyMessage(string message)
+        {
+            StartCoroutine(TypeTextWithCoroutine(message, Instantiate(_buyMessagePrefab, _scrollRect.content.transform)));
+            SetActivateLoading(false);
+
+            messages.Add(new MessageAI
+            {
+                Role = "assistant",
+                Content = message
+            });
+
         }
 
         // Эффект печатания текста

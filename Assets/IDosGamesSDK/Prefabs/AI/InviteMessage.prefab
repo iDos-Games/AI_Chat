@@ -557,8 +557,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4292071936
+  m_fontColor: {r: 0, g: 0.8235294, b: 0.827451, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -1132,6 +1132,7 @@ GameObject:
   - component: {fileID: 5483952469793561035}
   - component: {fileID: 6228491117290852323}
   - component: {fileID: 5728600290483269158}
+  - component: {fileID: 3902095731200560308}
   m_Layer: 5
   m_Name: Profile
   m_TagString: Untagged
@@ -1188,6 +1189,20 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &3902095731200560308
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7930550446521815078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e943dd7d430fdc419442355c268adcf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _aiName: {fileID: 2850505263482232307}
+  _aiIcon: {fileID: 2142319450149352103}
 --- !u!1001 &1466379922363424656
 PrefabInstance:
   m_ObjectHideFlags: 0

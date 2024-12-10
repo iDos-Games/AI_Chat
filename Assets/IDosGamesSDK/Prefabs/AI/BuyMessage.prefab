@@ -365,7 +365,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Buy Tokens
+  m_text: Buy Coins
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: c27a434de79d0d445843d961bcd13733, type: 2}
   m_sharedMaterial: {fileID: 614083157554701104, guid: c27a434de79d0d445843d961bcd13733,
@@ -510,7 +510,7 @@ MonoBehaviour:
     m_Top: 60
     m_Bottom: 50
   m_ChildAlignment: 3
-  m_Spacing: 20
+  m_Spacing: 60
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
@@ -755,6 +755,7 @@ GameObject:
   - component: {fileID: 6761038367370212000}
   - component: {fileID: 5694267144887816217}
   - component: {fileID: 457774473410528108}
+  - component: {fileID: 1973624709759577217}
   m_Layer: 5
   m_Name: Profile
   m_TagString: Untagged
@@ -811,6 +812,20 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &1973624709759577217
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6276307711586911600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e943dd7d430fdc419442355c268adcf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _aiName: {fileID: 903373566538061312}
+  _aiIcon: {fileID: 8471635835196333099}
 --- !u!1 &6908023548492791272
 GameObject:
   m_ObjectHideFlags: 0
@@ -930,7 +945,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 9068381104592039058}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1973624709759577217}
+        m_TargetAssemblyTypeName: IDosGames.AIProfile, Assembly-CSharp
+        m_MethodName: ShowBuyCoinPopup
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &7243645745104358580
 GameObject:
   m_ObjectHideFlags: 0
@@ -1126,8 +1153,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4292071936
+  m_fontColor: {r: 0, g: 0.8235294, b: 0.827451, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:

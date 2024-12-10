@@ -44,5 +44,10 @@ namespace IDosGames
         {
             return await ImageLoader.GetSpriteAsync(url);
         }
+
+        public void ShowBuyCoinPopup()
+        {
+            ShopSystem.PopUpSystem.ShowCoinPopUp();
+        }
     }
 }
