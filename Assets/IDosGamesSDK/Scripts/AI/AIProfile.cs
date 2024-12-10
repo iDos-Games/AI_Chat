@@ -47,7 +47,7 @@ namespace IDosGames
 
         public void ShowBuyCoinPopup()
         {
-            ShopSystem.PopUpSystem.ShowCoinPopUp();
+            ShopSystem.PopUpSystem.ShowShopWindow();
         }
     }
 }

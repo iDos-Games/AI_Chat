@@ -1114,7 +1114,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 70, y: 70}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &374481010
 MonoBehaviour:
@@ -10800,6 +10800,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: ShopSystem
       objectReference: {fileID: 0}
+    - target: {fileID: 3420524117534883847, guid: 1f48df6c1f035a443bb7251196fe0a5e,
+        type: 3}
+      propertyPath: _shopWindow
+      value: 
+      objectReference: {fileID: 1833458783}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

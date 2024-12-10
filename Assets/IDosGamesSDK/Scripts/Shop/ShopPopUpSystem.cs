@@ -6,7 +6,8 @@ namespace IDosGames
 
 	public class ShopPopUpSystem : MonoBehaviour
 	{
-		[SerializeField] private PopUp _vipPopUp;
+        [SerializeField] private GameObject _shopWindow;
+        [SerializeField] private PopUp _vipPopUp;
 		[SerializeField] private PopUp _tokenPopUp;
 		[SerializeField] private PopUp _coinPopUp;
 		[SerializeField] private PopUp _wkPopUp;
@@ -38,7 +39,12 @@ namespace IDosGames
 			popUp.gameObject.SetActive(active);
 		}
 
-		public void ShowTokenPopUp()
+        public void ShowShopWindow()
+        {
+            _shopWindow.SetActive(true);
+        }
+
+        public void ShowTokenPopUp()
 		{
 			SetActivatePopUp(_tokenPopUp, true);
 		}

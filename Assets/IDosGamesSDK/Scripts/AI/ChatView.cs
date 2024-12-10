@@ -96,7 +96,7 @@ namespace IDosGames
 
             if (currentAmount < amountToDeduct)
             {
-                string buyMessage = "Looks like you are out of coins. You need coins to send messages, buy them by clicking on the button below";
+                string buyMessage = "It looks like you are out of coins. You need coins to send messages, get them by clicking on the button below";
                 SendBuyMessage(buyMessage);
                 return;
             }
@@ -120,7 +120,7 @@ namespace IDosGames
             {
                 if (aiResponse.Contains("INSUFFICIENT_FUNDS"))
                 {
-                    string buyMessage = "Looks like you are out of coins. You need coins to send messages, buy them by clicking on the button below";
+                    string buyMessage = "It looks like you are out of coins. You need coins to send messages, get them by clicking on the button below";
                     SendBuyMessage(buyMessage);
                 }
                 else

@@ -299,7 +299,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _textToCopy: {fileID: 5551018211542433894}
-  _popUp: {fileID: 0}
+  _popUp: {fileID: 3139068894908610020}
 --- !u!1 &4525290853664506441
 GameObject:
   m_ObjectHideFlags: 0
@@ -325,12 +325,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4525290853664506441}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 6888439203232022816}
+  m_Father: {fileID: 6746153981943833226}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -365,7 +365,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Buy Coins
+  m_text: Get Coins
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: c27a434de79d0d445843d961bcd13733, type: 2}
   m_sharedMaterial: {fileID: 614083157554701104, guid: c27a434de79d0d445843d961bcd13733,
@@ -736,7 +736,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6746153981943833226}
-  - {fileID: 173416294513817552}
   m_Father: {fileID: 5551018211145499690}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -856,12 +855,13 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 173416294513817552}
   m_Father: {fileID: 6888439203232022816}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 10}
   m_SizeDelta: {x: 500, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7205690488246549944
@@ -1349,3 +1349,15 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 5403295091280618964}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &3139068894908610020 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7020103320801234992, guid: 5ff919227a77d99418aeaba6e44aabdd,
+    type: 3}
+  m_PrefabInstance: {fileID: 5403295091280618964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29acfda188607e74d8dc0de3772db42e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
