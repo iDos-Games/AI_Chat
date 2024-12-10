@@ -35,6 +35,30 @@ namespace IDosGames
             SetActivateLoading(false);
             SetInteractableSendButton(true);
 
+            // Программно присваиваем метод кнопке
+            _sendButton.onClick.AddListener(SendUserMessage);
+
+            // Подписка на изменение текста в поле ввода
+            _inputField.onValueChanged.AddListener(CheckInputLength);
+            ClearInput();
+        }
+
+        private void OnEnable()
+        {
+            UserDataService.FirstTimeDataUpdated += FirstMessage;
+            SetActivateLoading(false);
+            SetInteractableSendButton(true);
+        }
+
+        private void OnDisable()
+        {
+            UserDataService.FirstTimeDataUpdated -= FirstMessage;
+            StopAllCoroutines();
+        }
+
+        private void FirstMessage()
+        {
+
             if (string.IsNullOrEmpty(UserDataService.TitlePublicConfiguration.AiSettings.AiWelcomeMessage))
             {
                 _welcomeMessage = "Hello, I'm a support bot, can I help you?";
@@ -46,23 +70,6 @@ namespace IDosGames
 
             SendBotMessage(_welcomeMessage);
 
-            // Программно присваиваем метод кнопке
-            _sendButton.onClick.AddListener(SendUserMessage);
-
-            // Подписка на изменение текста в поле ввода
-            _inputField.onValueChanged.AddListener(CheckInputLength);
-            ClearInput();
-        }
-
-        private void OnEnable()
-        {
-            SetActivateLoading(false);
-            SetInteractableSendButton(true);
-        }
-
-        private void OnDisable()
-        {
-            StopAllCoroutines();
         }
 
         // Проверка длины ввода и установка активности кнопки
@@ -105,6 +112,21 @@ namespace IDosGames
             };
 
             string response = await AIService.CreateThreadAndRun(request);
+
+            if (response != null)
+            {
+                string currencyCode = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrency;
+                int amountToDeduct = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrencyAmount;
+
+                int currentAmount = IGSUserData.UserInventory.VirtualCurrency.GetValueOrDefault(currencyCode, 0);
+
+                int newAmount = currentAmount - amountToDeduct;
+
+                IGSUserData.UserInventory.VirtualCurrency[currencyCode] = newAmount;
+
+                UserDataService.VirtualCurrencyUpdatedInvoke();
+            }
+
             return response;
         }
 

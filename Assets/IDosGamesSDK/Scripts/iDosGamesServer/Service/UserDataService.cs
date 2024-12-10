@@ -34,6 +34,7 @@ namespace IDosGames
         public static event Action CustomUserDataUpdated;
         public static event Action SkinCatalogItemsUpdated;
         public static event Action EquippedSkinsUpdated;
+        public static event Action VirtualCurrencyUpdated;
 
         public static event Action<string, CustomUpdateResult> ClientModifyCustomUserDataUpdated;
 
@@ -99,6 +100,7 @@ namespace IDosGames
 
             UserInventoryReceived?.Invoke(userDataResult.UserInventoryResult);
             IGSUserData.UserInventory = userDataResult.UserInventoryResult;
+            VirtualCurrencyUpdated?.Invoke();
 
             OnTitlePublicConfigurationReceived(userDataResult.TitlePublicConfiguration);
             IGSUserData.TitlePublicConfiguration = userDataResult.TitlePublicConfiguration;
@@ -113,7 +115,7 @@ namespace IDosGames
             IGSUserData.RecommendedFriends = userDataResult.GetRecommendedFriends.ToString();
 
             IGSUserData.Currency = userDataResult.GetCurrencyData;
-
+            
             IGSUserData.ImageData = userDataResult.ImageData;
 
             DataUpdated?.Invoke();
@@ -122,6 +124,11 @@ namespace IDosGames
                 _firstTimeDataUpdated = true;
                 FirstTimeDataUpdated?.Invoke();
             }
+        }
+
+        public static void VirtualCurrencyUpdatedInvoke()
+        {
+            VirtualCurrencyUpdated?.Invoke();
         }
 
         public static void RequestUserAllData()
