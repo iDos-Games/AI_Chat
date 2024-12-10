@@ -27,7 +27,7 @@ namespace IDosGames
 
         private const float TYPE_SPEED = 50f;
         private const int MIN_MESSAGE_LENGTH = 2;
-        private const int MAX_MESSAGE_LENGTH = 500;
+        private const int MAX_MESSAGE_LENGTH = 1000;
         private List<MessageAI> messages = new List<MessageAI>();
 
         private const string MESSAGE_HISTORY_KEY = "MessageHistory1";
@@ -38,10 +38,7 @@ namespace IDosGames
             SetActivateLoading(false);
             SetInteractableSendButton(true);
 
-            // Программно присваиваем метод кнопке
             _sendButton.onClick.AddListener(SendUserMessage);
-
-            // Подписка на изменение текста в поле ввода
             _inputField.onValueChanged.AddListener(CheckInputLength);
             ClearInput();
         }
@@ -61,7 +58,6 @@ namespace IDosGames
 
         private void FirstMessage()
         {
-            // Загрузка истории сообщений
             bool isHistoryLoaded = LoadMessageHistory();
 
             if (!isHistoryLoaded)
@@ -79,19 +75,29 @@ namespace IDosGames
             }
         }
 
-        // Проверка длины ввода и установка активности кнопки
         private void CheckInputLength(string input)
         {
             SetInteractableSendButton(input.Length >= MIN_MESSAGE_LENGTH && input.Length <= MAX_MESSAGE_LENGTH);
         }
 
-        // Отправка сообщения пользователя
         public async void SendUserMessage()
         {
             string message = GetInputMessage();
             if (message.Length < MIN_MESSAGE_LENGTH || message.Length > MAX_MESSAGE_LENGTH)
             {
                 Debug.LogWarning("Message length is out of range.");
+                return;
+            }
+
+            string currencyCode = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrency;
+            int amountToDeduct = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrencyAmount;
+
+            int currentAmount = IGSUserData.UserInventory.VirtualCurrency.GetValueOrDefault(currencyCode, 0);
+
+            if (currentAmount < amountToDeduct)
+            {
+                string buyMessage = "Looks like you are out of coins. You need coins to send messages, buy them by clicking on the button below";
+                SendBuyMessage(buyMessage);
                 return;
             }
 
@@ -106,7 +112,6 @@ namespace IDosGames
                 Content = message
             });
 
-            // Сохранение истории сообщений
             SaveMessages(messages);
 
             string aiResponse = await GetAIResponse();
@@ -125,7 +130,6 @@ namespace IDosGames
             }
         }
 
-        // Получение ответа AI
         private async Task<string> GetAIResponse()
         {
             var request = new AIRequest
@@ -155,7 +159,6 @@ namespace IDosGames
             return response;
         }
 
-        // Отправка сообщения бота
         public void SendBotMessage(string message)
         {
             StartCoroutine(TypeTextWithCoroutine(message, Instantiate(_botMessagePrefab, _scrollRect.content.transform)));
@@ -167,7 +170,6 @@ namespace IDosGames
                 Content = message
             });
 
-            // Сохранение истории сообщений
             SaveMessages(messages);
         }
 
@@ -184,7 +186,6 @@ namespace IDosGames
 
         }
 
-        // Эффект печатания текста
         private IEnumerator TypeTextWithCoroutine(string message, ChatMessage botMessage)
         {
             string text = string.Empty;
@@ -197,39 +198,33 @@ namespace IDosGames
             }
         }
 
-        // Настройка активности кнопки отправки
         private void SetInteractableSendButton(bool interactable)
         {
             _sendButton.interactable = interactable;
         }
 
-        // Получение текста из поля ввода
         public string GetInputMessage()
         {
             return _inputField.text;
         }
 
-        // Очистка поля ввода
         private void ClearInput()
         {
             _inputField.text = string.Empty;
-            CheckInputLength(string.Empty); // Проверить длину после очистки
+            CheckInputLength(string.Empty);
         }
 
-        // Начать прокрутку вниз
         private void StartScrollToBottom()
         {
             StartCoroutine(nameof(ScrollToTop));
         }
 
-        // Прокрутка вверх
         private IEnumerator ScrollToTop()
         {
             yield return new WaitForEndOfFrame();
             _scrollRect.verticalNormalizedPosition = 0f;
         }
 
-        // Активация/деактивация индикатора загрузки
         private void SetActivateLoading(bool active)
         {
             if (active)
@@ -243,14 +238,12 @@ namespace IDosGames
             _loading.SetActive(active);
         }
 
-        // Метод для отправки сообщения через префаб
         private void SendMessagePrefab(ChatMessage prefab, string message)
         {
             var userMessage = Instantiate(prefab, _scrollRect.content.transform);
             userMessage.Set(message);
         }
 
-        // Метод для загрузки истории сообщений
         private bool LoadMessageHistory()
         {
             string json = PlayerPrefs.GetString(MESSAGE_HISTORY_KEY, string.Empty);
@@ -271,17 +264,28 @@ namespace IDosGames
                     }
                     messages.Add(message);
                 }
-                return true; // История сообщений загружена
+                return true;
             }
-            return false; // История сообщений отсутствует
+            return false;
         }
 
-        // Метод для сохранения сообщений в PlayerPrefs
         private void SaveMessages(List<MessageAI> messages)
         {
             string json = JsonConvert.SerializeObject(messages);
             PlayerPrefs.SetString(MESSAGE_HISTORY_KEY, json);
             PlayerPrefs.Save();
+        }
+
+        // Добавляем метод для удаления истории сообщений
+        public void ClearMessageHistory()
+        {
+            PlayerPrefs.DeleteKey(MESSAGE_HISTORY_KEY);
+            PlayerPrefs.Save();
+            messages.Clear();
+            foreach (Transform child in _scrollRect.content.transform)
+            {
+                Destroy(child.gameObject);
+            }
         }
     }
 }
