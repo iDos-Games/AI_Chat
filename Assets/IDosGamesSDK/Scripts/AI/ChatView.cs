@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Newtonsoft.Json;
 
 namespace IDosGames
 {
@@ -28,6 +29,7 @@ namespace IDosGames
         private const int MAX_MESSAGE_LENGTH = 500;
         private List<MessageAI> messages = new List<MessageAI>();
 
+        private const string MESSAGE_HISTORY_KEY = "MessageHistory1";
         string _welcomeMessage;
 
         private void Start()
@@ -58,18 +60,22 @@ namespace IDosGames
 
         private void FirstMessage()
         {
+            // Загрузка истории сообщений
+            bool isHistoryLoaded = LoadMessageHistory();
 
-            if (string.IsNullOrEmpty(UserDataService.TitlePublicConfiguration.AiSettings.AiWelcomeMessage))
+            if (!isHistoryLoaded)
             {
-                _welcomeMessage = "Hello, I'm a support bot, can I help you?";
-            }
-            else
-            {
-                _welcomeMessage = UserDataService.TitlePublicConfiguration.AiSettings.AiWelcomeMessage;
-            }
+                if (string.IsNullOrEmpty(UserDataService.TitlePublicConfiguration.AiSettings.AiWelcomeMessage))
+                {
+                    _welcomeMessage = "Hello, I'm a support bot, can I help you?";
+                }
+                else
+                {
+                    _welcomeMessage = UserDataService.TitlePublicConfiguration.AiSettings.AiWelcomeMessage;
+                }
 
-            SendBotMessage(_welcomeMessage);
-
+                SendBotMessage(_welcomeMessage);
+            }
         }
 
         // Проверка длины ввода и установка активности кнопки
@@ -98,6 +104,9 @@ namespace IDosGames
                 Role = "user",
                 Content = message
             });
+
+            // Сохранение истории сообщений
+            SaveMessages(messages);
 
             string aiResponse = await GetAIResponse();
             SendBotMessage(aiResponse);
@@ -141,6 +150,9 @@ namespace IDosGames
                 Role = "assistant",
                 Content = message
             });
+
+            // Сохранение истории сообщений
+            SaveMessages(messages);
         }
 
         // Эффект печатания текста
@@ -207,6 +219,40 @@ namespace IDosGames
         {
             var userMessage = Instantiate(prefab, _scrollRect.content.transform);
             userMessage.Set(message);
+        }
+
+        // Метод для загрузки истории сообщений
+        private bool LoadMessageHistory()
+        {
+            string json = PlayerPrefs.GetString(MESSAGE_HISTORY_KEY, string.Empty);
+            if (!string.IsNullOrEmpty(json))
+            {
+                List<MessageAI> loadedMessages = JsonConvert.DeserializeObject<List<MessageAI>>(json);
+                foreach (var message in loadedMessages)
+                {
+                    if (message.Role == "user")
+                    {
+                        var userMessage = Instantiate(_userMessagePrefab, _scrollRect.content.transform);
+                        userMessage.Set(message.Content);
+                    }
+                    else if (message.Role == "assistant")
+                    {
+                        var botMessage = Instantiate(_botMessagePrefab, _scrollRect.content.transform);
+                        botMessage.Set(message.Content);
+                    }
+                    messages.Add(message);
+                }
+                return true; // История сообщений загружена
+            }
+            return false; // История сообщений отсутствует
+        }
+
+        // Метод для сохранения сообщений в PlayerPrefs
+        private void SaveMessages(List<MessageAI> messages)
+        {
+            string json = JsonConvert.SerializeObject(messages);
+            PlayerPrefs.SetString(MESSAGE_HISTORY_KEY, json);
+            PlayerPrefs.Save();
         }
     }
 }
