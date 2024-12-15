@@ -64,7 +64,7 @@ namespace IDosGames
             {
                 if (string.IsNullOrEmpty(UserDataService.TitlePublicConfiguration.AiSettings.AiWelcomeMessage))
                 {
-                    _welcomeMessage = "Hello, I'm a support bot, can I help you?";
+                    _welcomeMessage = "ѕривет! „ем могу быть полезен?";
                 }
                 else
                 {
@@ -77,12 +77,20 @@ namespace IDosGames
 
         private void CheckInputLength(string input)
         {
-            SetInteractableSendButton(input.Length >= MIN_MESSAGE_LENGTH && input.Length <= MAX_MESSAGE_LENGTH);
+            if (input.Contains("\n"))
+            {
+                SendUserMessage();
+                ClearInput();
+            }
+            else
+            {
+                SetInteractableSendButton(input.Length >= MIN_MESSAGE_LENGTH && input.Length <= MAX_MESSAGE_LENGTH);
+            }
         }
 
         public async void SendUserMessage()
         {
-            string message = GetInputMessage();
+            string message = GetInputMessage().Replace("\n", "");
             if (message.Length < MIN_MESSAGE_LENGTH || message.Length > MAX_MESSAGE_LENGTH)
             {
                 Debug.LogWarning("Message length is out of range.");
@@ -96,7 +104,7 @@ namespace IDosGames
 
             if (currentAmount < amountToDeduct)
             {
-                string buyMessage = "Looks like you are out of coins. You need coins to send messages, get them by inviting friends or buying them";
+                string buyMessage = "ѕохоже, у вас закончились монеты. ћонеты нужны дл€ отправки сообщений, их можно получить, приглаша€ друзей, просматрива€ рекламу или покупа€ их.";
                 SendBuyMessage(buyMessage);
                 return;
             }
@@ -120,7 +128,7 @@ namespace IDosGames
             {
                 if (aiResponse.Contains("INSUFFICIENT_FUNDS"))
                 {
-                    string buyMessage = "Looks like you are out of coins. You need coins to send messages, get them by inviting friends or buying them";
+                    string buyMessage = "ѕохоже, у вас закончились монеты. ћонеты нужны дл€ отправки сообщений, их можно получить, приглаша€ друзей, просматрива€ рекламу или покупа€ их.";
                     SendBuyMessage(buyMessage);
                 }
                 else
