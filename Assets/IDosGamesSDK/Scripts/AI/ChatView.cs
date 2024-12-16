@@ -45,11 +45,33 @@ namespace IDosGames
             SetInteractableSendButton(true);
             _sendButton.onClick.AddListener(SendUserMessage);
             _inputField.onValueChanged.AddListener(CheckInputLength);
+            _inputField.onSelect.AddListener(OnInputFieldSelected);
+            _inputField.onDeselect.AddListener(OnInputFieldDeselected);
             ClearInput();
 
             _scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
 
             StartScrollToBottom();
+        }
+
+        private void OnDestroy()
+        {
+            _scrollRect.onValueChanged.RemoveListener(OnScrollRectValueChanged);
+            _inputField.onSelect.RemoveListener(OnInputFieldSelected);
+            _inputField.onDeselect.RemoveListener(OnInputFieldDeselected);
+        }
+
+        private void OnEnable()
+        {
+            UserDataService.FirstTimeDataUpdated += FirstMessage;
+            SetActivateLoading(false);
+            SetInteractableSendButton(true);
+        }
+
+        private void OnDisable()
+        {
+            UserDataService.FirstTimeDataUpdated -= FirstMessage;
+            StopAllCoroutines();
         }
 
         private void Update()
@@ -64,11 +86,6 @@ namespace IDosGames
             }
         }
 
-        private void OnDestroy()
-        {
-            _scrollRect.onValueChanged.RemoveListener(OnScrollRectValueChanged);
-        }
-
         private void OnScrollRectValueChanged(Vector2 position)
         {
             if (IsUserInteractingWithScroll())
@@ -78,22 +95,19 @@ namespace IDosGames
             }
         }
 
+        private void OnInputFieldSelected(string text)
+        {
+            // ѕрокрутка к последнему сообщению, чтобы оно оказалось в середине экрана
+        }
+
+        private void OnInputFieldDeselected(string text)
+        {
+            // ћожно добавить логику, если требуетс€ что-то сделать при потере фокуса  
+        }
+
         private bool IsUserInteractingWithScroll()
         {
             return Input.GetMouseButton(0) || Input.touchCount > 0;
-        }
-
-        private void OnEnable()
-        {
-            UserDataService.FirstTimeDataUpdated += FirstMessage;
-            SetActivateLoading(false);
-            SetInteractableSendButton(true);
-        }
-
-        private void OnDisable()
-        {
-            UserDataService.FirstTimeDataUpdated -= FirstMessage;
-            StopAllCoroutines();
         }
 
         private void FirstMessage()
