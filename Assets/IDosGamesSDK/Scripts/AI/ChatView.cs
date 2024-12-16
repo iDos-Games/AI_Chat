@@ -29,18 +29,58 @@ namespace IDosGames
         private const int MIN_MESSAGE_LENGTH = 2;
         private const int MAX_MESSAGE_LENGTH = 1000;
         private List<MessageAI> messages = new List<MessageAI>();
-
         private const string MESSAGE_HISTORY_KEY = "MessageHistory1";
-        string _welcomeMessage;
+        private string _welcomeMessage;
+
+        private bool _isUserScrolling = false;
+        private float _scrollInactivityTime = 0f;
+        private const float INACTIVITY_THRESHOLD = 6f;
 
         private void Start()
         {
+            _isUserScrolling = false;
+            _scrollInactivityTime = INACTIVITY_THRESHOLD;
+
             SetActivateLoading(false);
             SetInteractableSendButton(true);
-
             _sendButton.onClick.AddListener(SendUserMessage);
             _inputField.onValueChanged.AddListener(CheckInputLength);
             ClearInput();
+
+            _scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
+
+            StartScrollToBottom();
+        }
+
+        private void Update()
+        {
+            if (_isUserScrolling)
+            {
+                _scrollInactivityTime += Time.deltaTime;
+                if (_scrollInactivityTime > INACTIVITY_THRESHOLD)
+                {
+                    _isUserScrolling = false;
+                }
+            }
+        }
+
+        private void OnDestroy()
+        {
+            _scrollRect.onValueChanged.RemoveListener(OnScrollRectValueChanged);
+        }
+
+        private void OnScrollRectValueChanged(Vector2 position)
+        {
+            if (IsUserInteractingWithScroll())
+            {
+                _isUserScrolling = true;
+                _scrollInactivityTime = 0f;
+            }
+        }
+
+        private bool IsUserInteractingWithScroll()
+        {
+            return Input.GetMouseButton(0) || Input.touchCount > 0;
         }
 
         private void OnEnable()
@@ -59,7 +99,6 @@ namespace IDosGames
         private void FirstMessage()
         {
             bool isHistoryLoaded = LoadMessageHistory();
-
             if (!isHistoryLoaded)
             {
                 if (string.IsNullOrEmpty(UserDataService.TitlePublicConfiguration.AiSettings.AiWelcomeMessage))
@@ -70,7 +109,6 @@ namespace IDosGames
                 {
                     _welcomeMessage = UserDataService.TitlePublicConfiguration.AiSettings.AiWelcomeMessage;
                 }
-
                 SendBotMessage(_welcomeMessage);
             }
         }
@@ -90,6 +128,8 @@ namespace IDosGames
 
         public async void SendUserMessage()
         {
+            _isUserScrolling = false;
+            _scrollInactivityTime = INACTIVITY_THRESHOLD;
             string message = GetInputMessage().Replace("\n", "");
             if (message.Length < MIN_MESSAGE_LENGTH || message.Length > MAX_MESSAGE_LENGTH)
             {
@@ -99,9 +139,7 @@ namespace IDosGames
 
             string currencyCode = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrency;
             int amountToDeduct = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrencyAmount;
-
             int currentAmount = IGSUserData.UserInventory.VirtualCurrency.GetValueOrDefault(currencyCode, 0);
-
             if (currentAmount < amountToDeduct)
             {
                 string buyMessage = "ѕохоже, у вас закончились монеты. ћонеты нужны дл€ отправки сообщений, их можно получить, приглаша€ друзей, просматрива€ рекламу или покупа€ их.";
@@ -119,11 +157,9 @@ namespace IDosGames
                 Role = "user",
                 Content = message
             });
-
             SaveMessages(messages);
 
             string aiResponse = await GetAIResponse();
-
             if (aiResponse != null)
             {
                 if (aiResponse.Contains("INSUFFICIENT_FUNDS"))
@@ -144,54 +180,47 @@ namespace IDosGames
             {
                 Messages = messages
             };
-
             string response = await AIService.CreateThreadAndRun(request);
-
             if (response != null)
             {
                 if (!response.Contains("INSUFFICIENT_FUNDS"))
                 {
                     string currencyCode = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrency;
                     int amountToDeduct = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrencyAmount;
-
                     int currentAmount = IGSUserData.UserInventory.VirtualCurrency.GetValueOrDefault(currencyCode, 0);
-
                     int newAmount = currentAmount - amountToDeduct;
-
                     IGSUserData.UserInventory.VirtualCurrency[currencyCode] = newAmount;
-
                     UserDataService.VirtualCurrencyUpdatedInvoke();
                 }
             }
-
             return response;
         }
 
         public void SendBotMessage(string message)
         {
+            _isUserScrolling = false;
+            _scrollInactivityTime = INACTIVITY_THRESHOLD;
             StartCoroutine(TypeTextWithCoroutine(message, Instantiate(_botMessagePrefab, _scrollRect.content.transform)));
             SetActivateLoading(false);
-
             messages.Add(new MessageAI
             {
                 Role = "assistant",
                 Content = message
             });
-
             SaveMessages(messages);
         }
 
         public void SendBuyMessage(string message)
         {
+            _isUserScrolling = false;
+            _scrollInactivityTime = INACTIVITY_THRESHOLD;
             StartCoroutine(TypeTextWithCoroutine(message, Instantiate(_buyMessagePrefab, _scrollRect.content.transform)));
             SetActivateLoading(false);
-
             messages.Add(new MessageAI
             {
                 Role = "assistant",
                 Content = message
             });
-
         }
 
         private IEnumerator TypeTextWithCoroutine(string message, ChatMessage botMessage)
@@ -224,13 +253,19 @@ namespace IDosGames
 
         private void StartScrollToBottom()
         {
-            StartCoroutine(nameof(ScrollToTop));
+            if (!_isUserScrolling)
+            {
+                StartCoroutine(nameof(ScrollToTop));
+            }
         }
 
         private IEnumerator ScrollToTop()
         {
             yield return new WaitForEndOfFrame();
-            _scrollRect.verticalNormalizedPosition = 0f;
+            if (!_isUserScrolling) // ≈щЄ раз провер€ем перед прокруткой  
+            {
+                _scrollRect.verticalNormalizedPosition = 0f;
+            }
         }
 
         private void SetActivateLoading(bool active)
@@ -284,7 +319,6 @@ namespace IDosGames
             PlayerPrefs.Save();
         }
 
-        // ƒобавл€ем метод дл€ удалени€ истории сообщений
         public void ClearMessageHistory()
         {
             PlayerPrefs.DeleteKey(MESSAGE_HISTORY_KEY);
