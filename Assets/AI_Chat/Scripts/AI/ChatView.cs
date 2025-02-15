@@ -29,7 +29,7 @@ namespace IDosGames
         private const int MIN_MESSAGE_LENGTH = 2;
         private const int MAX_MESSAGE_LENGTH = 1000;
         private List<MessageAI> messages = new List<MessageAI>();
-        private const string MESSAGE_HISTORY_KEY = "MessageHistory1";
+        private static string MESSAGE_HISTORY_KEY = "MessageHistory" + IDosGamesSDKSettings.Instance.TitleID;
         private string _welcomeMessage;
 
         private bool _isUserScrolling = false;

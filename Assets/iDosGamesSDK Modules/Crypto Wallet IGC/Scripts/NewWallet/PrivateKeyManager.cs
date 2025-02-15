@@ -6,8 +6,8 @@ namespace IDosGames
 {
     public static class PrivateKeyManager
     {
-        private const string PlayerPrefsPrivateKey = "EncryptedPrivateKey";
-        private const string PlayerPrefsSeedPhraseKey = "EncryptedSeedPhrase";
+        private static string PlayerPrefsPrivateKey = "EncryptedPrivateKey" + AuthService.UserID;
+        private static string PlayerPrefsSeedPhraseKey = "EncryptedSeedPhrase" + AuthService.UserID;
 
         public static void SaveSeedPhrase(string seedPhrase, string privateKey, string password)
         {
@@ -40,7 +40,7 @@ namespace IDosGames
                 privateKey = Decrypt(encryptedPrivateKey, password);
                 if (IDosGamesSDKSettings.Instance.DebugLogging)
                 {
-                    Debug.Log("Decoded PrivateKey: " + privateKey);
+                    //Debug.Log("Decoded PrivateKey: " + privateKey);
                 }
             }
             catch
@@ -63,7 +63,7 @@ namespace IDosGames
                 seedPhrase = Decrypt(encryptedSeedPhrase, password);
                 if (IDosGamesSDKSettings.Instance.DebugLogging)
                 {
-                    Debug.Log("Decoded SeedPhrase: " + seedPhrase);
+                    //Debug.Log("Decoded SeedPhrase: " + seedPhrase);
                 }
             }
             catch

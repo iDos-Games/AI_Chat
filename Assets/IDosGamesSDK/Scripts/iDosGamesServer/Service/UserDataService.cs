@@ -115,7 +115,7 @@ namespace IDosGames
             IGSUserData.RecommendedFriends = userDataResult.GetRecommendedFriends.ToString();
 
             IGSUserData.Currency = userDataResult.GetCurrencyData;
-            
+
             IGSUserData.ImageData = userDataResult.ImageData;
 
             DataUpdated?.Invoke();
@@ -177,7 +177,7 @@ namespace IDosGames
                 }
                 );
         }
-        
+
         public static void RequestCustomUserData()
         {
             IGSClientAPI.GetCustomUserData
@@ -365,7 +365,7 @@ namespace IDosGames
             {
                 Debug.Log(JsonConvert.SerializeObject(parameter));
             }
-            
+
             _ = IGSClientAPI.ExecuteFunction(
 
                 functionName: ServerFunctionHandlers.UpdateCustomUserData,

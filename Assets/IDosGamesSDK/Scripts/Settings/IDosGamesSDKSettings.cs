@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEngine;
 
 namespace IDosGames
@@ -224,20 +225,30 @@ namespace IDosGames
             SaveState(_cryptoWalletEnabled, CRYPTO_WALLET_DEFINE);
         }
 
-        private readonly BuildTargetGroup[] platforms = {
-          BuildTargetGroup.iOS, BuildTargetGroup.Android, BuildTargetGroup.WebGL, BuildTargetGroup.Standalone, BuildTargetGroup.WSA, BuildTargetGroup.tvOS, BuildTargetGroup.PS4, BuildTargetGroup.PS5, BuildTargetGroup.XboxOne, BuildTargetGroup.Switch, BuildTargetGroup.VisionOS
+        private readonly NamedBuildTarget[] platforms = {
+            NamedBuildTarget.Android,
+            NamedBuildTarget.iOS,
+            NamedBuildTarget.Standalone,
+            NamedBuildTarget.WebGL,
+            NamedBuildTarget.XboxOne,
+            NamedBuildTarget.PS4,
+            NamedBuildTarget.PS5,
+            NamedBuildTarget.NintendoSwitch,
+            NamedBuildTarget.WindowsStoreApps,
+            NamedBuildTarget.tvOS,
+            NamedBuildTarget.VisionOS
         };
 
-        private void SaveState<T>(T newState, string definePrefix, IEnumerable<T> enumValues) where T : Enum
+        private void SaveState<TEnum>(TEnum newState, string definePrefix, IEnumerable<TEnum> enumValues) where TEnum : Enum
         {
             foreach (var platform in platforms)
             {
                 var allDefines = GetAllScriptingDefineSymbolsExcept(platform, enumValues.Select(e => $"{definePrefix}{e.ToString().ToUpper()}").ToArray());
 
-                if (!EqualityComparer<T>.Default.Equals(newState, default(T)))
+                if (!EqualityComparer<TEnum>.Default.Equals(newState, default(TEnum)))
                     allDefines.Add($"{definePrefix}{newState.ToString().ToUpper()}");
 
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(platform, string.Join(";", allDefines.ToArray()));
+                PlayerSettings.SetScriptingDefineSymbols(platform, string.Join(";", allDefines.ToArray()));
             }
         }
 
@@ -250,24 +261,24 @@ namespace IDosGames
                 if (newState)
                     allDefines.Add(defineSymbol);
 
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(platform, string.Join(";", allDefines.ToArray()));
+                PlayerSettings.SetScriptingDefineSymbols(platform, string.Join(";", allDefines.ToArray()));
             }
         }
 
-        private List<string> GetAllScriptingDefineSymbolsExcept(BuildTargetGroup targetPlatform, params string[] exceptSymbols)
+        private List<string> GetAllScriptingDefineSymbolsExcept(NamedBuildTarget targetPlatform, params string[] exceptSymbols)
         {
-            string allDefinesString = PlayerSettings.GetScriptingDefineSymbolsForGroup(targetPlatform);
+            string allDefinesString = PlayerSettings.GetScriptingDefineSymbols(targetPlatform);
             var exceptSymbolsSet = new HashSet<string>(exceptSymbols);
             return allDefinesString.Split(';').Where(d => !exceptSymbolsSet.Contains(d)).ToList();
         }
 
-        [MenuItem("Tools/iDos Games SDK/2. General Settings")]
+        [MenuItem("iDos Games/2. General Settings")]
         private static void OpenSettings()
         {
             Selection.activeObject = Instance;
         }
 
-        [MenuItem("Tools/iDos Games SDK/4. Object Inspection Data")]
+        [MenuItem("iDos Games/4. Object Inspection Data")]
         private static void SelectObjectInspection()
         {
             string configPath = "Assets/IDosGamesSDK/Resources/Data/ObjectInspection.asset";

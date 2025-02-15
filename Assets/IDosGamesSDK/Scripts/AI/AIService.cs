@@ -60,7 +60,7 @@ namespace IDosGames
             };
 
             string responseString = await SendPostRequest(URL_AI_SERVICE + nameof(CreateMessage), requestBody);
-            var response = JsonConvert.DeserializeObject<string>(responseString); // Поменять на модель ответа сервера
+            var response = JsonConvert.DeserializeObject<string>(responseString);
 
             if (response != null) { IDosGamesSDKSettings.Instance.PlayTime = 0; }
 
@@ -80,7 +80,7 @@ namespace IDosGames
             };
 
             string responseString = await SendPostRequest(URL_AI_SERVICE + nameof(RetrieveResponse), requestBody);
-            var response = JsonConvert.DeserializeObject<string>(responseString); // Поменять на модель ответа сервера
+            var response = JsonConvert.DeserializeObject<string>(responseString);
 
             if (response != null) { IDosGamesSDKSettings.Instance.PlayTime = 0; }
 

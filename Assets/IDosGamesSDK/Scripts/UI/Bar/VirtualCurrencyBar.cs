@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace IDosGames
@@ -11,19 +10,16 @@ namespace IDosGames
 		{
 			UpdateAmount();
 			UserInventory.InventoryUpdated += UpdateAmount;
-			UserDataService.VirtualCurrencyUpdated += UpdateAmount;
-        }
+		}
 
 		private void OnDisable()
 		{
 			UserInventory.InventoryUpdated -= UpdateAmount;
-            UserDataService.VirtualCurrencyUpdated -= UpdateAmount;
-        }
+		}
 
 		public override void UpdateAmount()
 		{
-            //Amount = UserInventory.GetVirtualCurrencyAmount(_virtualCurrencyID.Trim().ToUpper());
-            Amount = IGSUserData.UserInventory.VirtualCurrency.GetValueOrDefault(_virtualCurrencyID.Trim().ToUpper(), 0);
-        }
+			Amount = UserInventory.GetVirtualCurrencyAmount(_virtualCurrencyID.Trim().ToUpper());
+		}
 	}
 }

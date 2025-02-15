@@ -92,7 +92,7 @@ namespace IDosGames
 
     public class FunctionParameters
     {
-        
+
         // UpdateCustomReadOnlyData  
         public string Key { get; set; }
         public object Value { get; set; }

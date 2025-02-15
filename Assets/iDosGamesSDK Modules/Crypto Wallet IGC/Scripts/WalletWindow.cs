@@ -19,42 +19,66 @@ namespace IDosGames
 
 			if (direction == TransactionDirection.Game)
 			{
-				transferResult = await WalletService.TransferTokenToGame(virtualCurrencyID, amount);
-				transactionHash = WalletService.TransactionHashAfterTransactionToGame;
+                Loading.ShowTransparentPanel();
 
-				if (string.IsNullOrEmpty(transactionHash))
+				bool balance = await WalletService.HasSufficientBalanceForGas();
+				if (balance)
+				{
+                    transferResult = await WalletService.TransferTokenToGame(virtualCurrencyID, amount);
+                    transactionHash = WalletService.TransactionHashAfterTransactionToGame;
+                    Loading.HideAllPanels();
+                }
+				else
+				{
+                    Message.Show(MessageCode.INSUFFICIENT_BALANCE);
+                    Loading.HideAllPanels();
+                    return null;
+				}
+                
+                if (string.IsNullOrEmpty(transactionHash))
 				{
 					return transferResult; // User cancelled
 				}
 			}
 			else if (direction == TransactionDirection.UsersCryptoWallet)
 			{
-				transferResult = await WalletService.TransferTokenToUsersCryptoWallet(virtualCurrencyID, amount);
-				transactionHash = GetTransactionHashFromResultMessage(transferResult);
-			}
+				Loading.ShowTransparentPanel();
+
+                bool balance = await WalletService.HasSufficientBalanceForGas();
+                if (balance)
+				{
+                    string signatureString = await WalletService.GetTokenWithdrawalSignature(virtualCurrencyID, amount);
+                    var signature = JsonConvert.DeserializeObject<WithdrawalSignatureResult>(signatureString);
+                    transactionHash = await WalletService.TransferTokenToUser(signature);
+                    Loading.HideAllPanels();
+                }
+				else
+				{
+                    Message.Show(MessageCode.INSUFFICIENT_BALANCE);
+                    Loading.HideAllPanels();
+                    return null;
+                }
+            }
 
 			if(IDosGamesSDKSettings.Instance.DebugLogging)
 			{
-                Debug.Log("TransferResult: " + transferResult);
+                Debug.Log("Transaction Hash: " + transactionHash);
             }
-			
-			ProcessResultMessage(transferResult);
 
-			if (transferResult != null)
-			{
-				if (transactionHash != null && transactionHash != string.Empty)
-				{
-					int chainID = BlockchainSettings.ChainID;
-					WalletTransactionHistory.SaveNewItem(chainID, transactionHash, direction,
-						GetTokenName(virtualCurrencyID), amount,
-						GetTokenImagePath(virtualCurrencyID));
+            //ProcessResultMessage(transferResult);
 
-					_walletManager.RefreshWalletBalance();
-					UserDataService.RequestUserAllData();
-				}
-			}
+            if (transactionHash != null && transactionHash != string.Empty)
+            {
+                int chainID = BlockchainSettings.ChainID;
+                WalletTransactionHistory.SaveNewItem(chainID, transactionHash, direction,
+                    GetTokenName(virtualCurrencyID), amount,
+                    GetTokenImagePath(virtualCurrencyID));
 
-			return transferResult;
+                _walletManager.RefreshWalletBalance();
+                UserDataService.RequestUserAllData();
+            }
+
+            return transferResult;
 		}
 
 		public async Task<string> TransferNFT(TransactionDirection direction, string skinID, int amount)
