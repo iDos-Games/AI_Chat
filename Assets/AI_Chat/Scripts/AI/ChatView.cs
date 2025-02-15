@@ -117,7 +117,7 @@ namespace IDosGames
             {
                 if (string.IsNullOrEmpty(UserDataService.TitlePublicConfiguration.AiSettings.AiWelcomeMessage))
                 {
-                    _welcomeMessage = "ѕривет! „ем могу быть полезен?";
+                    _welcomeMessage = "Hi! Can I help you?";
                 }
                 else
                 {
@@ -156,7 +156,7 @@ namespace IDosGames
             int currentAmount = IGSUserData.UserInventory.VirtualCurrency.GetValueOrDefault(currencyCode, 0);
             if (currentAmount < amountToDeduct)
             {
-                string buyMessage = "ѕохоже, у вас закончились монеты. ћонеты нужны дл€ отправки сообщений, их можно получить, приглаша€ друзей, просматрива€ рекламу или покупа€ их.";
+                string buyMessage = "It looks like you have run out of coins. Coins are needed to send messages and can be obtained by inviting friends, viewing ads or buying them.";
                 SendBuyMessage(buyMessage);
                 return;
             }
@@ -178,7 +178,7 @@ namespace IDosGames
             {
                 if (aiResponse.Contains("INSUFFICIENT_FUNDS"))
                 {
-                    string buyMessage = "ѕохоже, у вас закончились монеты. ћонеты нужны дл€ отправки сообщений, их можно получить, приглаша€ друзей, просматрива€ рекламу или покупа€ их.";
+                    string buyMessage = "It looks like you have run out of coins. Coins are needed to send messages and can be obtained by inviting friends, viewing ads or buying them.";
                     SendBuyMessage(buyMessage);
                 }
                 else
