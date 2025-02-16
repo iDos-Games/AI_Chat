@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,39 +9,30 @@ namespace IDosGames
         [SerializeField] private TMP_Text _aiName;
         [SerializeField] private Image _aiIcon;
 
-        private async void Start()
+        private void Start()
         {
-            string aiName = UserDataService.TitlePublicConfiguration.AiSettings.AiName;
-
-            if (string.IsNullOrEmpty(aiName))
-            {
-                _aiName.text = "AI";
-            }
-            else
-            {
-                _aiName.text = aiName;
-            }
-
-            string aiAvatarUrl = UserDataService.TitlePublicConfiguration.AiSettings.AiAvatarUrl;
-
-            if (!string.IsNullOrEmpty(aiAvatarUrl))
-            {
-                Sprite aiAvatarSprite = await LoadAiAvatarAsync(aiAvatarUrl);
-
-                if (aiAvatarSprite != null)
-                {
-                    _aiIcon.sprite = aiAvatarSprite;
-                }
-                else
-                {
-                    Debug.LogError("Failed to load AI avatar.");
-                }
-            }
+            UpdateAvatar();
         }
 
-        private async Task<Sprite> LoadAiAvatarAsync(string url)
+
+        private void OnEnable()
         {
-            return await ImageLoader.GetSpriteAsync(url);
+            ImageLoader.ImagesUpdated += UpdateAvatar;
+        }
+
+        private void OnDisable()
+        {
+            ImageLoader.ImagesUpdated -= UpdateAvatar;
+        }
+
+        private void UpdateAvatar()
+        {
+            _aiName.text = ChatView._aiName;
+
+            if (ChatView._aiAvatarSprite != null)
+            {
+                _aiIcon.sprite = ChatView._aiAvatarSprite;
+            }
         }
 
         public void ShowBuyCoinPopup()

@@ -29,12 +29,15 @@ namespace IDosGames
         private const int MIN_MESSAGE_LENGTH = 2;
         private const int MAX_MESSAGE_LENGTH = 1000;
         private List<MessageAI> messages = new List<MessageAI>();
-        private static string MESSAGE_HISTORY_KEY = "MessageHistory" + IDosGamesSDKSettings.Instance.TitleID;
+        private static string MESSAGE_HISTORY_KEY = "MessageHistory" + AuthService.UserID;
         private string _welcomeMessage;
 
         private bool _isUserScrolling = false;
         private float _scrollInactivityTime = 0f;
         private const float INACTIVITY_THRESHOLD = 6f;
+
+        public static string _aiName;
+        public static Sprite _aiAvatarSprite;
 
         private void Start()
         {
@@ -63,6 +66,7 @@ namespace IDosGames
 
         private void OnEnable()
         {
+            ImageLoader.ImagesUpdated += UpdateAvatar;
             UserDataService.FirstTimeDataUpdated += FirstMessage;
             SetActivateLoading(false);
             SetInteractableSendButton(true);
@@ -70,6 +74,7 @@ namespace IDosGames
 
         private void OnDisable()
         {
+            ImageLoader.ImagesUpdated -= UpdateAvatar;
             UserDataService.FirstTimeDataUpdated -= FirstMessage;
             StopAllCoroutines();
         }
@@ -82,6 +87,27 @@ namespace IDosGames
                 if (_scrollInactivityTime > INACTIVITY_THRESHOLD)
                 {
                     _isUserScrolling = false;
+                }
+            }
+        }
+
+        private async void UpdateAvatar()
+        {
+            _aiName = string.IsNullOrEmpty(UserDataService.TitlePublicConfiguration.AiSettings.AiName) ? "AI" : UserDataService.TitlePublicConfiguration.AiSettings.AiName;
+
+            string aiAvatarUrl = UserDataService.TitlePublicConfiguration.AiSettings.AiAvatarUrl;
+
+            if (!string.IsNullOrEmpty(aiAvatarUrl))
+            {
+                Sprite aiAvatarSprite = await ImageLoader.GetSpriteAsync(aiAvatarUrl);
+
+                if (aiAvatarSprite != null)
+                {
+                    _aiAvatarSprite = aiAvatarSprite;
+                }
+                else
+                {
+                    Debug.LogError("Failed to load AI avatar.");
                 }
             }
         }

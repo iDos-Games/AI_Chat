@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -27,8 +25,6 @@ namespace IDosGames
         private static Dictionary<string, CachedImageInfo> CachedImageInfos;
         private const long MaxCacheSize = 1024 * 1024 * 1024;
         private const string CacheKey = "ImageCache";
-
-        private static readonly ConcurrentDictionary<string, SemaphoreSlim> UrlLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
 
         static ImageLoader()
         {
@@ -67,98 +63,85 @@ namespace IDosGames
 
         public static async Task<Sprite> LoadExternalImageAsync(string url)
         {
-            if (string.IsNullOrEmpty(url))
-            {
-                return null;
-            }
+            if (string.IsNullOrEmpty(url)) return null;
 
-            if (ImageCache.TryGetValue(url, out var cachedImage))
+            if (ImageCache.TryGetValue(url, out var cachedSprite))
             {
                 UpdateLastAccessedTime(url);
-                return cachedImage;
+                return cachedSprite;
             }
-
-            var semaphore = UrlLocks.GetOrAdd(url, new SemaphoreSlim(1, 1));
-
-            await semaphore.WaitAsync();
-            try
-            {
-                if (ImageCache.TryGetValue(url, out cachedImage))
-                {
-                    UpdateLastAccessedTime(url);
-                    return cachedImage;
-                }
-
-                byte[] imageBytes;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-                var loadTaskSource = new TaskCompletionSource<byte[]>();  
-  
-                WebSDK.LoadDataFromCache(url, (data) =>  
-                {  
-                    loadTaskSource.SetResult(data);  
-                });  
-  
-                var cachedData = await loadTaskSource.Task;  
-  
-                if (cachedData != null)  
-                {  
-                    imageBytes = cachedData;  
-                }  
-                else  
-                {  
-                    imageBytes = await DownloadImageBytes(url);  
-                    WebSDK.SaveDataToCache(url, imageBytes);  
-                }  
-  
-                CreateSpriteFromBytes(url, imageBytes);  
+            var sprite = await DownloadAndCacheSpriteWebGL(url);
+            return sprite;
 #else
-                if (CachedImageInfos.TryGetValue(url, out var cachedInfo) && cachedInfo != null && File.Exists(cachedInfo.LocalPath))
-                {
-                    imageBytes = await File.ReadAllBytesAsync(cachedInfo.LocalPath);
-                }
-                else
-                {
-                    imageBytes = await DownloadImageBytes(url);
-                    string localPath = Path.Combine(Application.persistentDataPath, Path.GetFileName(url));
-
-                    using (var fs = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true))
-                    {
-                        await fs.WriteAsync(imageBytes, 0, imageBytes.Length);
-                    }
-
-                    CachedImageInfos[url] = new CachedImageInfo
-                    {
-                        Url = url,
-                        LocalPath = localPath,
-                        LastAccessed = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-                    };
-
-                    SaveCache();
-                    CleanupCache();
-                }
-
-                CreateSpriteFromBytes(url, imageBytes);
+            return await DownloadAndCacheSpriteOtherPlatforms(url);
 #endif
-
-                return ImageCache.ContainsKey(url) ? ImageCache[url] : null;
-            }
-            catch (IOException ioEx)
-            {
-                Debug.LogError($"IO Exception when accessing file for URL {url}: {ioEx.Message}");
-                return null;
-            }
-            finally
-            {
-                semaphore.Release();
-
-                if (UrlLocks.TryGetValue(url, out var existingSemaphore) && existingSemaphore.CurrentCount == 1)
-                {
-                    UrlLocks.TryRemove(url, out _);
-                    existingSemaphore.Dispose();
-                }
-            }
         }
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+        private static async Task<Sprite> DownloadAndCacheSpriteWebGL(string url)
+        {
+            byte[] imageBytes = await DownloadImageBytes(url);
+            if (imageBytes == null) return null;
+
+            var sprite = CreateSpriteFromBytes(url, imageBytes);
+            UpdateLastAccessedTime(url);
+            CleanupWebGLCache();
+
+            return sprite;
+        }
+
+        private static void CleanupWebGLCache()
+        {
+            long totalMemory = ImageCache.Values.Sum(s =>
+                s.texture.width * s.texture.height * 4);
+
+            if (totalMemory <= MaxCacheSize) return;
+
+            var toRemove = CachedImageInfos
+                .OrderBy(x => x.Value.LastAccessed)
+                .Take(ImageCache.Count / 4)
+                .ToList();
+
+            foreach (var item in toRemove)
+            {
+                ImageCache.Remove(item.Key);
+                CachedImageInfos.Remove(item.Key);
+            }
+
+            Debug.Log($"WebGL cache cleaned. Removed {toRemove.Count} entries");
+            SaveCache();
+        }
+#else
+        private static async Task<Sprite> DownloadAndCacheSpriteOtherPlatforms(string url)
+        {
+            byte[] imageBytes;
+
+            if (CachedImageInfos.TryGetValue(url, out var cachedInfo) && File.Exists(cachedInfo.LocalPath))
+            {
+                imageBytes = await File.ReadAllBytesAsync(cachedInfo.LocalPath);
+            }
+            else
+            {
+                imageBytes = await DownloadImageBytes(url);
+                string localPath = Path.Combine(Application.persistentDataPath, Path.GetFileName(url));
+                await File.WriteAllBytesAsync(localPath, imageBytes);
+
+                CachedImageInfos[url] = new CachedImageInfo
+                {
+                    Url = url,
+                    LocalPath = localPath,
+                    LastAccessed = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                };
+
+                SaveCache();
+                CleanupCache();
+            }
+
+            return CreateSpriteFromBytes(url, imageBytes);
+        }
+#endif
 
         private static async Task<byte[]> DownloadImageBytes(string url)
         {
@@ -179,18 +162,23 @@ namespace IDosGames
             }
         }
 
-        private static void CreateSpriteFromBytes(string url, byte[] imageBytes)
+        private static Sprite CreateSpriteFromBytes(string url, byte[] imageBytes)
         {
-            if (imageBytes != null)
-            {
-                Texture2D texture = new Texture2D(2, 2);
-                if (texture.LoadImage(imageBytes))
-                {
-                    var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
-                    ImageCache[url] = sprite;
-                    ImagesUpdated?.Invoke();
-                }
-            }
+            if (imageBytes == null || imageBytes.Length == 0) return null;
+
+            Texture2D texture = new Texture2D(2, 2);
+            if (!texture.LoadImage(imageBytes)) return null;
+
+            var sprite = Sprite.Create(
+                texture,
+                new Rect(0, 0, texture.width, texture.height),
+                Vector2.zero
+            );
+
+            ImageCache[url] = sprite;
+            ImagesUpdated?.Invoke();
+
+            return sprite;
         }
 
         public static Sprite LoadLocalImage(string imagePath)
@@ -252,38 +240,17 @@ namespace IDosGames
 
         private static void CleanupCache()
         {
-            long totalSize = CachedImageInfos.Values.Sum(info =>
-            {
-                try
-                {
-                    return new FileInfo(info.LocalPath).Length;
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"Error getting file size for {info.LocalPath}: {ex.Message}");
-                    return 0;
-                }
-            });
-
+            long totalSize = CachedImageInfos.Values.Sum(info => new FileInfo(info.LocalPath).Length);
             if (totalSize <= MaxCacheSize) return;
 
             var orderedInfos = CachedImageInfos.Values.OrderBy(info => info.LastAccessed).ToList();
             foreach (var info in orderedInfos)
             {
-                try
+                if (File.Exists(info.LocalPath))
                 {
-                    if (File.Exists(info.LocalPath))
-                    {
-                        long fileSize = new FileInfo(info.LocalPath).Length;
-                        File.Delete(info.LocalPath);
-                        totalSize -= fileSize;
-                    }
+                    totalSize -= new FileInfo(info.LocalPath).Length;
+                    File.Delete(info.LocalPath);
                 }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"Error deleting file {info.LocalPath}: {ex.Message}");
-                }
-
                 CachedImageInfos.Remove(info.Url);
                 if (totalSize <= MaxCacheSize) break;
             }
