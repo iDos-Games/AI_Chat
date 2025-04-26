@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace IDosGames
 {
@@ -29,18 +30,22 @@ namespace IDosGames
         private const int MIN_MESSAGE_LENGTH = 2;
         private const int MAX_MESSAGE_LENGTH = 1000;
         private List<MessageAI> messages = new List<MessageAI>();
-        private static string MESSAGE_HISTORY_KEY = "MessageHistory" + AuthService.UserID;
+        private string _currentAiID = "OpenAI";
         private string _welcomeMessage;
 
         private bool _isUserScrolling = false;
         private float _scrollInactivityTime = 0f;
         private const float INACTIVITY_THRESHOLD = 6f;
 
-        public static string _aiName;
+        public static string _aiName = "AI";
         public static Sprite _aiAvatarSprite;
+        public static string _aiAvatarUrl;
 
         private void Start()
         {
+            //PlayerPrefs.DeleteAll();
+            _currentAiID = PlayerPrefs.GetString("CurrentAiID_" + AuthService.UserID, "OpenAI");
+
             _isUserScrolling = false;
             _scrollInactivityTime = INACTIVITY_THRESHOLD;
 
@@ -91,15 +96,23 @@ namespace IDosGames
             }
         }
 
+        private void FirstMessage()
+        {
+            SwitchToAiID(_currentAiID);
+        }
+
         private async void UpdateAvatar()
         {
-            _aiName = string.IsNullOrEmpty(UserDataService.TitlePublicConfiguration.AiSettings.AiName) ? "AI" : UserDataService.TitlePublicConfiguration.AiSettings.AiName;
-
-            string aiAvatarUrl = UserDataService.TitlePublicConfiguration.AiSettings.AiAvatarUrl;
-
-            if (!string.IsNullOrEmpty(aiAvatarUrl))
+            var aiCustomSetting = UserDataService.TitlePublicConfiguration.AiCustomSettings.FirstOrDefault(setting => setting.Name == _currentAiID);
+            if (aiCustomSetting != null)
             {
-                Sprite aiAvatarSprite = await ImageLoader.GetSpriteAsync(aiAvatarUrl);
+                _aiName = string.IsNullOrEmpty(aiCustomSetting.AiSettings.AiName) ? "AI" : aiCustomSetting.AiSettings.AiName;
+                _aiAvatarUrl = aiCustomSetting.AiSettings.AiAvatarUrl;
+            }
+
+            if (!string.IsNullOrEmpty(_aiAvatarUrl))
+            {
+                Sprite aiAvatarSprite = await ImageLoader.GetSpriteAsync(_aiAvatarUrl);
 
                 if (aiAvatarSprite != null)
                 {
@@ -123,34 +136,17 @@ namespace IDosGames
 
         private void OnInputFieldSelected(string text)
         {
-            // Прокрутка к последнему сообщению, чтобы оно оказалось в середине экрана
+            // Scroll to the last message so it appears in the middle of the screen
         }
 
         private void OnInputFieldDeselected(string text)
         {
-            // Можно добавить логику, если требуется что-то сделать при потере фокуса  
+            // You can add logic if you need to do something when focus is lost.
         }
 
         private bool IsUserInteractingWithScroll()
         {
             return Input.GetMouseButton(0) || Input.touchCount > 0;
-        }
-
-        private void FirstMessage()
-        {
-            bool isHistoryLoaded = LoadMessageHistory();
-            if (!isHistoryLoaded)
-            {
-                if (string.IsNullOrEmpty(UserDataService.TitlePublicConfiguration.AiSettings.AiWelcomeMessage))
-                {
-                    _welcomeMessage = "Hi! Can I help you?";
-                }
-                else
-                {
-                    _welcomeMessage = UserDataService.TitlePublicConfiguration.AiSettings.AiWelcomeMessage;
-                }
-                SendBotMessage(_welcomeMessage);
-            }
         }
 
         private void CheckInputLength(string input)
@@ -168,6 +164,13 @@ namespace IDosGames
 
         public async void SendUserMessage()
         {
+            var aiCustomSetting = UserDataService.TitlePublicConfiguration.AiCustomSettings.FirstOrDefault(setting => setting.Name == _currentAiID);
+            if (aiCustomSetting == null)
+            {
+                Debug.LogError("aiCustomSetting is null");
+                return;
+            }
+
             _isUserScrolling = false;
             _scrollInactivityTime = INACTIVITY_THRESHOLD;
             string message = GetInputMessage().Replace("\n", "");
@@ -177,8 +180,8 @@ namespace IDosGames
                 return;
             }
 
-            string currencyCode = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrency;
-            int amountToDeduct = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrencyAmount;
+            string currencyCode = aiCustomSetting.AiSettings.AiRequestCurrency;
+            int amountToDeduct = aiCustomSetting.AiSettings.AiRequestCurrencyAmount;
             int currentAmount = IGSUserData.UserInventory.VirtualCurrency.GetValueOrDefault(currencyCode, 0);
             if (currentAmount < amountToDeduct)
             {
@@ -218,6 +221,7 @@ namespace IDosGames
         {
             var request = new AIRequest
             {
+                Name = _currentAiID,
                 Messages = messages
             };
             string response = await AIService.CreateThreadAndRun(request);
@@ -225,12 +229,16 @@ namespace IDosGames
             {
                 if (!response.Contains("INSUFFICIENT_FUNDS"))
                 {
-                    string currencyCode = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrency;
-                    int amountToDeduct = UserDataService.TitlePublicConfiguration.AiSettings.AiRequestCurrencyAmount;
-                    int currentAmount = IGSUserData.UserInventory.VirtualCurrency.GetValueOrDefault(currencyCode, 0);
-                    int newAmount = currentAmount - amountToDeduct;
-                    IGSUserData.UserInventory.VirtualCurrency[currencyCode] = newAmount;
-                    UserDataService.VirtualCurrencyUpdatedInvoke();
+                    var aiCustomSetting = UserDataService.TitlePublicConfiguration.AiCustomSettings.FirstOrDefault(setting => setting.Name == _currentAiID);
+                    if (aiCustomSetting != null)
+                    {
+                        string currencyCode = aiCustomSetting.AiSettings.AiRequestCurrency;
+                        int amountToDeduct = aiCustomSetting.AiSettings.AiRequestCurrencyAmount;
+                        int currentAmount = IGSUserData.UserInventory.VirtualCurrency.GetValueOrDefault(currencyCode, 0);
+                        int newAmount = currentAmount - amountToDeduct;
+                        IGSUserData.UserInventory.VirtualCurrency[currencyCode] = newAmount;
+                        UserDataService.VirtualCurrencyUpdatedInvoke();
+                    }
                 }
             }
             return response;
@@ -302,7 +310,7 @@ namespace IDosGames
         private IEnumerator ScrollToTop()
         {
             yield return new WaitForEndOfFrame();
-            if (!_isUserScrolling) // Ещё раз проверяем перед прокруткой  
+            if (!_isUserScrolling)
             {
                 _scrollRect.verticalNormalizedPosition = 0f;
             }
@@ -329,45 +337,120 @@ namespace IDosGames
 
         private bool LoadMessageHistory()
         {
-            string json = PlayerPrefs.GetString(MESSAGE_HISTORY_KEY, string.Empty);
+            string key = "MessageHistory_" + _currentAiID + "_" + AuthService.UserID;
+            string json = PlayerPrefs.GetString(key, string.Empty);
             if (!string.IsNullOrEmpty(json))
             {
                 List<MessageAI> loadedMessages = JsonConvert.DeserializeObject<List<MessageAI>>(json);
-                foreach (var message in loadedMessages)
+                if (loadedMessages != null && loadedMessages.Count > 0)
                 {
-                    if (message.Role == "user")
+                    foreach (var message in loadedMessages)
                     {
-                        var userMessage = Instantiate(_userMessagePrefab, _scrollRect.content.transform);
-                        userMessage.Set(message.Content);
+                        if (message.Role == "user")
+                        {
+                            var userMessage = Instantiate(_userMessagePrefab, _scrollRect.content.transform);
+                            userMessage.Set(message.Content);
+                        }
+                        else if (message.Role == "assistant")
+                        {
+                            var botMessage = Instantiate(_botMessagePrefab, _scrollRect.content.transform);
+                            botMessage.Set(message.Content);
+                        }
+                        messages.Add(message);
                     }
-                    else if (message.Role == "assistant")
-                    {
-                        var botMessage = Instantiate(_botMessagePrefab, _scrollRect.content.transform);
-                        botMessage.Set(message.Content);
-                    }
-                    messages.Add(message);
+                    return true;
                 }
-                return true;
             }
             return false;
         }
 
         private void SaveMessages(List<MessageAI> messages)
         {
+            string key = "MessageHistory_" + _currentAiID + "_" + AuthService.UserID;
             string json = JsonConvert.SerializeObject(messages);
-            PlayerPrefs.SetString(MESSAGE_HISTORY_KEY, json);
+            PlayerPrefs.SetString(key, json);
             PlayerPrefs.Save();
         }
 
         public void ClearMessageHistory()
         {
-            PlayerPrefs.DeleteKey(MESSAGE_HISTORY_KEY);
+            string key = "MessageHistory_" + _currentAiID + "_" + AuthService.UserID;
+            PlayerPrefs.DeleteKey(key);
             PlayerPrefs.Save();
             messages.Clear();
             foreach (Transform child in _scrollRect.content.transform)
             {
                 Destroy(child.gameObject);
             }
+            SwitchToAiID(_currentAiID);
         }
+
+        public async void SwitchToAiID(string newAiID)
+        {
+            // Save the history of the current AI, if there is one
+            if (!string.IsNullOrEmpty(_currentAiID))
+            {
+                SaveMessages(messages);
+            }
+
+            // Update _currentAiID to a new one BEFORE all operations
+            _currentAiID = newAiID;
+            PlayerPrefs.SetString("CurrentAiID_" + AuthService.UserID, _currentAiID);
+            PlayerPrefs.Save();
+
+            // Clearing current history and UI
+            messages.Clear();
+            foreach (Transform child in _scrollRect.content.transform)
+            {
+                Destroy(child.gameObject);
+            }
+
+            // Loading settings and avatar for the new AI
+            await LoadAvatarAsync();
+
+            // Loading history for the new AI
+            bool isHistoryLoaded = LoadMessageHistory();
+            if (!isHistoryLoaded)
+            {
+                // If there is no history, we send a welcome message
+                SendWelcomeMessage();
+            }
+        }
+
+        private void SendWelcomeMessage()
+        {
+            // Loading settings for the current _currentAiID
+            var aiCustomSetting = UserDataService.TitlePublicConfiguration.AiCustomSettings.FirstOrDefault(setting => setting.Name == _currentAiID);
+
+            if (aiCustomSetting != null)
+            {
+                string welcomeMessage = string.IsNullOrEmpty(aiCustomSetting.AiSettings.AiWelcomeMessage) ? "Hello! How can I help you?" : aiCustomSetting.AiSettings.AiWelcomeMessage;
+                SendBotMessage(welcomeMessage);
+            }
+        }
+
+        private async Task LoadAvatarAsync()
+        {
+            var aiCustomSetting = UserDataService.TitlePublicConfiguration.AiCustomSettings.FirstOrDefault(setting => setting.Name == _currentAiID);
+            if (aiCustomSetting != null)
+            {
+                _aiName = string.IsNullOrEmpty(aiCustomSetting.AiSettings.AiName) ? "AI" : aiCustomSetting.AiSettings.AiName;
+                _aiAvatarUrl = aiCustomSetting.AiSettings.AiAvatarUrl;
+            }
+
+            if (!string.IsNullOrEmpty(_aiAvatarUrl))
+            {
+                Sprite aiAvatarSprite = await ImageLoader.GetSpriteAsync(_aiAvatarUrl);
+                if (aiAvatarSprite != null)
+                {
+                    _aiAvatarSprite = aiAvatarSprite;
+                }
+                else
+                {
+                    Debug.LogError("Failed to load AI avatar.");
+                }
+            }
+        }
+
     }
 }
