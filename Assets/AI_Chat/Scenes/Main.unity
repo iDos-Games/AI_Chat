@@ -2420,7 +2420,7 @@ GameObject:
   - component: {fileID: 894886216}
   - component: {fileID: 894886215}
   m_Layer: 5
-  m_Name: ButtonSetting
+  m_Name: TutorialAI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2553,7 +2553,7 @@ GameObject:
   - component: {fileID: 973151496}
   - component: {fileID: 973151495}
   m_Layer: 5
-  m_Name: ButtonSetting_1
+  m_Name: CZangaAI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5635,7 +5635,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1869106637
 RectTransform:
   m_ObjectHideFlags: 0

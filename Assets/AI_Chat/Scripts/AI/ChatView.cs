@@ -103,12 +103,9 @@ namespace IDosGames
 
         private async void UpdateAvatar()
         {
-            var aiCustomSetting = UserDataService.TitlePublicConfiguration.AiCustomSettings.FirstOrDefault(setting => setting.Name == _currentAiID);
-            if (aiCustomSetting != null)
-            {
-                _aiName = string.IsNullOrEmpty(aiCustomSetting.AiSettings.AiName) ? "AI" : aiCustomSetting.AiSettings.AiName;
-                _aiAvatarUrl = aiCustomSetting.AiSettings.AiAvatarUrl;
-            }
+            var aiCustomSetting = UserDataService.TitlePublicConfiguration?.AiCustomSettings?.FirstOrDefault(setting => setting.Name == _currentAiID);
+            _aiName = aiCustomSetting != null && !string.IsNullOrEmpty(aiCustomSetting.AiSettings.AiName) ? aiCustomSetting.AiSettings.AiName : "AI";
+            _aiAvatarUrl = aiCustomSetting?.AiSettings.AiAvatarUrl ?? "https://cloud.idosgames.com/drive/img/template/ai/yoda.jpg";
 
             if (!string.IsNullOrEmpty(_aiAvatarUrl))
             {
@@ -420,22 +417,31 @@ namespace IDosGames
         private void SendWelcomeMessage()
         {
             // Loading settings for the current _currentAiID
-            var aiCustomSetting = UserDataService.TitlePublicConfiguration.AiCustomSettings.FirstOrDefault(setting => setting.Name == _currentAiID);
+            var aiCustomSetting = UserDataService.TitlePublicConfiguration?.AiCustomSettings?.FirstOrDefault(setting => setting.Name == _currentAiID);
 
             if (aiCustomSetting != null)
             {
                 string welcomeMessage = string.IsNullOrEmpty(aiCustomSetting.AiSettings.AiWelcomeMessage) ? "Hello! How can I help you?" : aiCustomSetting.AiSettings.AiWelcomeMessage;
                 SendBotMessage(welcomeMessage);
             }
+            else
+            {
+                SendBotMessage("Hello! How can I help you?");
+            }
         }
 
         private async Task LoadAvatarAsync()
         {
-            var aiCustomSetting = UserDataService.TitlePublicConfiguration.AiCustomSettings.FirstOrDefault(setting => setting.Name == _currentAiID);
+            var aiCustomSetting = UserDataService.TitlePublicConfiguration?.AiCustomSettings?.FirstOrDefault(setting => setting.Name == _currentAiID);
             if (aiCustomSetting != null)
             {
                 _aiName = string.IsNullOrEmpty(aiCustomSetting.AiSettings.AiName) ? "AI" : aiCustomSetting.AiSettings.AiName;
                 _aiAvatarUrl = aiCustomSetting.AiSettings.AiAvatarUrl;
+            }
+            else
+            {
+                _aiName = "Yoda";
+                _aiAvatarUrl = "https://cloud.idosgames.com/drive/img/template/ai/yoda.jpg";
             }
 
             if (!string.IsNullOrEmpty(_aiAvatarUrl))
@@ -449,6 +455,10 @@ namespace IDosGames
                 {
                     Debug.LogError("Failed to load AI avatar.");
                 }
+            }
+            else
+            {
+                _aiAvatarSprite = null;
             }
         }
 

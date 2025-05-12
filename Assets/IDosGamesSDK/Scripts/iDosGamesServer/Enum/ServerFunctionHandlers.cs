@@ -20,6 +20,7 @@ namespace IDosGames
         UpdateDailyOffers,
         GrantItemsAfterIAPPurchase,
         UpdateLeaderBoard,
+        ClaimTokenReward,
         ClaimCoinReward,
         ClaimX3CoinReward,
         ClaimX5CoinReward,
@@ -61,5 +62,7 @@ namespace IDosGames
         CheckTelegramInvoice,
         RegisterTelegramWebhook,
         LoginWithTelegram,
+        ForgotPassword,
+        ResetPassword,
     }
 }
